@@ -1,0 +1,145 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Roles{
+  Subscriber
+  Curator
+}
+
+enum Status{
+  active
+  cancelled
+  paused
+  expired
+}
+
+model User{
+  id String @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+  email String @unique 
+  password String 
+  firstName String?
+  lastName String?
+  role Roles 
+  @@map("users")
+  products Product[]
+  subscription Subscription[]
+
+}
+
+model Product{
+  id String @id @default(uuid())
+  name String 
+  description String?
+  price Float
+  stock Int @default(0)
+  allowBackorder Boolean @default(false)
+  curatorId String 
+  maxSubscribers Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+  @@map("products")
+  user User @relation(fields: [curatorId],references: [id])
+  subscriptions Subscription[]
+}
+
+model Subscription{
+  id String @id @default(uuid())
+  subscriberId String 
+  productId String
+  status Status
+  nextBillingDate DateTime
+  createdAt DateTime @default(now())
+  user User @relation(fields: [subscriberId],references: [id]) 
+  product Product @relation(fields: [productId],references: [id])
+  @@map("subscriptions")
+}
+
+/*
+====================
+Future Models (for Implementation in Week 3+)
+====================
+
+1. PRODUCT
+----------
+id: UUID
+name: string
+description: string (optional)
+price: float
+stock: int
+allowBackorder: boolean (default: false)
+maxSubscribers: int (optional cap per product)
+curatorId: UUID → User.id
+createdAt: timestamp
+updatedAt: timestamp
+
+// Notes:
+// - Owned by a curator
+// - If stock = 0 and allowBackorder = false → disallow new subscriptions
+// - Low stock should trigger internal event
+
+
+2. SUBSCRIPTION
+---------------
+id: UUID
+subscriberId: UUID → User.id
+productId: UUID → Product.id
+status: enum('active', 'cancelled', 'paused', 'pending', 'payment_failed')
+startDate: timestamp
+nextBillingDate: timestamp
+renewalPlan: enum('monthly', 'biweekly')
+autoRenew: boolean (default: true)
+createdAt: timestamp
+updatedAt: timestamp
+
+// Notes:
+// - Connects subscriber to a product (not directly to curator)
+// - Controlled via CQRS (commands, queries, events)
+// - Stripe integration handles billing, webhooks update status
+// - Deletion of a product will delete related subscriptions + trigger NotifyEvent
+
+
+3. NOTIFY_EVENT (internal pub/sub model)
+-----------------------------------------
+id: UUID
+type: enum('SUBSCRIPTION_CONFIRMED', 'PAYMENT_FAILED', 'PRODUCT_REMOVED', ...)
+recipientId: UUID → User.id
+payload: JSONB
+sentAt: timestamp (nullable)
+channel: enum('email', 'websocket', ...)
+
+// Notes:
+// - Used internally to pass cross-service notification intent
+// - Notification Microservice listens on Redis and acts accordingly
+
+
+4. SHIPPING_JOB (optional future)
+---------------------------------
+id: UUID
+productId: UUID
+scheduledFor: timestamp
+status: enum('scheduled', 'processing', 'completed')
+packingListGenerated: boolean
+trackingNumbers: JSONB (optional future)
+
+// Notes:
+// - Created by @nestjs/schedule cron job per shipping cycle
+// - Emits internal event: ShippingCycleStartedEvent
+// - Might be useful for fulfillment tracking
+
+
+*/

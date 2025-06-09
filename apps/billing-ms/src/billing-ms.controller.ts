@@ -1,12 +1,14 @@
 import { Controller, Get } from '@nestjs/common';
 import { BillingMsService } from './billing-ms.service';
+import { EventPattern } from '@nestjs/microservices';
 
 @Controller()
 export class BillingMsController {
-  constructor(private readonly billingMsService: BillingMsService) {}
-
-  @Get()
-  getHello(): string {
-    return this.billingMsService.getHello();
+  constructor() {}
+  @EventPattern("Health")
+  follow(payload : any){
+    console.log("Redis Connection Successful")
+    return null
   }
 }
+
