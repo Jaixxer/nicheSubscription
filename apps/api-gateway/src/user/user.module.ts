@@ -1,12 +1,15 @@
 import { Module } from '@nestjs/common';
-import { UserService } from './user.service';
+import { UserRepository } from './repositories/user.repository';
 import { UserController } from './user.controller';
 import { PrismaModule } from 'apps/api-gateway/prisma/prisma.module';
+import { RedisModule } from '../redis/redis.module';
+import { CreateUserHandler } from './handlers/user.handler';
+import { CqrsModule } from '@nestjs/cqrs';
 
 @Module({
-  imports:[PrismaModule],
-  providers: [UserService],
+  imports:[PrismaModule,RedisModule,CqrsModule],
+  providers: [UserRepository, CreateUserHandler], // ← Add handler
   controllers: [UserController],
-  exports: [UserService] // Exporting UserService to be used in other modules
+  exports: [UserRepository]
 })
 export class UserModule {}

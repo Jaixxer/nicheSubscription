@@ -1,19 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { LoginDto, SignUpDto } from '../../../../libs/common/dtos/index';
 import * as argon2 from 'argon2';
-import { UserService } from '../user/user.service';
+import { UserRepository } from '../user/repositories/user.repository';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { CommandBus } from '@nestjs/cqrs';
+import { CreateUserCommand } from '../user/commands';
 
 
 @Injectable()
 export class AuthService {
-    constructor(private user: UserService,private jwtService: JwtService,private config: ConfigService) { }
-    async signup(dto: SignUpDto) {
+    constructor(
+        private user: UserRepository,
+        private jwtService: JwtService,
+        private config: ConfigService,
+        private commandBus: CommandBus
+    ) { }    async signup(dto: SignUpDto) {
         const password = dto.password;
         const hash = await argon2.hash(password);
         dto.password = hash;
-        const user = await this.user.createuser(dto);
+        const user = await this.commandBus.execute(new CreateUserCommand(
+            dto.email,
+            dto.password,
+            dto.role,
+            dto.phone,
+            dto.firstName,
+            dto.lastName
+        ));
         if (!user) {
             throw new Error('User creation failed');
         }

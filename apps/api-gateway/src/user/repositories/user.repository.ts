@@ -1,10 +1,10 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { LoginDto, SignUpDto } from '../auth/dtos';
+import { LoginDto, SignUpDto } from '../../../../../libs/common/dtos/dto.auth';
 import { PrismaService } from 'apps/api-gateway/prisma/prisma.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
-export class UserService {
+export class UserRepository {
     constructor(private prismaClient: PrismaService) { }
     async createuser(dto: SignUpDto) {
         try {
@@ -66,8 +66,8 @@ export class UserService {
             if(!setRole){
                 throw Error
             }
-            return true
             console.log("Roles added successfully!")
+            return true
                 
             
         } catch (error) {

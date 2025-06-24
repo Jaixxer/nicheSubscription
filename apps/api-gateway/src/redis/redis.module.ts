@@ -25,6 +25,15 @@ import Redis from 'ioredis';
         options: {
           port: 6379,
           host: "localhost",
+          db:1
+        }
+      },
+      {
+        name:"NOTIFICATION_SERVICE",transport:Transport.REDIS,
+        options: {
+          port: 6379,
+          host: "localhost",
+          db:2
         }
       }
     ])],

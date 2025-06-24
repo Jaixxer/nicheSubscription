@@ -6,10 +6,11 @@ import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { CqrsModule } from '@nestjs/cqrs';
+import { TestModule } from './test/test.module';
 @Module({
   imports: [ConfigModule.forRoot({
     isGlobal: true
-  }),PrismaModule, RedisModule,HealthModule, AuthModule, UserModule,CqrsModule.forRoot()],
+  }),PrismaModule, RedisModule,HealthModule, AuthModule, UserModule,CqrsModule.forRoot(), TestModule],
   controllers: [],
   providers:[],
   exports: [],

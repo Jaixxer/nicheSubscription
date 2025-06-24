@@ -7,7 +7,8 @@ export class HealthService {
     test(){
         this.billingServ.emit("Health","tests")
         console.log("Client Module Working")
-    }    guardtest(dto){
+    }    
+    guardtest(dto){
         const user = dto.user
         return user
     }
