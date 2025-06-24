@@ -14,16 +14,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Roles{
-  Subscriber
-  Curator
-}
 
-enum Status{
+
+enum Status {
   active
   cancelled
   paused
   expired
+  pending
+  payment_failed
 }
 
 model User{
@@ -34,41 +33,223 @@ model User{
   password String 
   firstName String?
   lastName String?
-  role Roles 
+  phone String? @unique
+  phoneVerified Boolean? @default(false)
   @@map("users")
   products Product[]
   subscription Subscription[]
-
+  userRoles UserRole[]
+  orders Order[]
+  auditLogs AuditLog[]
+  notifications NotificationEvent[]
+  shippingAddresses ShippingAddress[]  // Add this line
 }
 
 model Product{
+  id               String    @id @default(uuid())
+  name             String 
+  description      String?
+  pricingTiers     PricingTier[]
+  stock            Int       @default(0)
+  allowBackorder   Boolean   @default(false)
+  curatorId        String 
+  maxSubscribers   Int
+  category         String?
+  availablePlans RenewalPlan[] 
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt()
+  
+  user         User          @relation(fields: [curatorId], references: [id])
+  subscriptions Subscription[]
+  orderItems   OrderItem[]
+  @@map("products")
+}
+model PricingTier{
   id String @id @default(uuid())
-  name String 
-  description String?
-  price Float
-  stock Int @default(0)
-  allowBackorder Boolean @default(false)
-  curatorId String 
-  maxSubscribers Int?
+  productId String
+  plan RenewalPlan
+  minQuantity Int
+  maxQuantity Int?
+  pricePerUnit Float
+  isActive Boolean @default(true)
+  product Product @relation(fields: [productId], references: [id])
+  @@unique([productId, plan, minQuantity])
+  @@map("pricing_tiers")
+}
+
+model Subscription {
+  id              String      @id @default(uuid())
+  subscriberId    String 
+  productId       String
+  status          Status
+  startDate       DateTime    @default(now())
+  nextBillingDate DateTime
+  chosenPlan     RenewalPlan  
+  autoRenew       Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt()
+  quantity        Int
+
+  user           User            @relation(fields: [subscriberId], references: [id])
+  product        Product         @relation(fields: [productId], references: [id]) 
+  orders         Order[]
+  paymentRecords PaymentRecord[]
+  @@map("subscriptions")
+  
+}
+
+enum RenewalPlan {
+  monthly
+  biweekly
+  weekly
+}
+
+model Role{
+  id Int @id 
+  role String
+  description String
+  userRoles UserRole[]
+}
+
+model UserRole{
+  id Int @id @default(autoincrement())
+  roleId Int
+  userId String
+  role Role @relation(fields:[roleId],references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  userId        String
+  subscriptionId String?
+  totalAmount   Float
+  status        OrderStatus
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt()
+  shippingAddressId String
+  
+  user         User        @relation(fields: [userId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  orderItems   OrderItem[]
+  paymentRecords PaymentRecord[]
+  shippingAddress ShippingAddress @relation(fields: [shippingAddressId],references: [id])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+  
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  @@map("order_items")
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  shipped
+  delivered
+  cancelled
+}
+model PaymentRecord {
+  id              String        @id @default(uuid())
+  orderId         String?
+  subscriptionId  String?
+  amount          Float
+  currency        String        @default("USD")
+  status          PaymentStatus
+  paymentMethod   String
+  stripePaymentId String?
+  createdAt       DateTime      @default(now())
+  
+  order        Order?        @relation(fields: [orderId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  @@map("payment_records")
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+model NotificationEvent {
+  id          String            @id @default(uuid())
+  type        NotificationType
+  recipientId String
+  payload     Json
+  sentAt      DateTime?
+  channel     NotificationChannel
+  status      NotificationStatus @default(pending)
+  createdAt   DateTime          @default(now())
+  
+  recipient User @relation(fields: [recipientId], references: [id])
+  @@map("notification_events")
+}
+
+enum NotificationType {
+  SUBSCRIPTION_CONFIRMED
+  PAYMENT_FAILED
+  PRODUCT_REMOVED
+  SHIPPING_NOTIFICATION
+  LOW_STOCK_ALERT
+}
+
+enum NotificationChannel {
+  email
+  sms
+  websocket
+  push
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  failed
+}
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  resource  String
+  resourceId String?
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id])
+  @@map("audit_logs")
+}
+
+model ShippingAddress {
+  id        String   @id @default(uuid())
+  userId    String
+  firstName String
+  lastName  String
+  company   String?
+  address1  String
+  address2  String?
+  city      String
+  state     String
+  postalCode String
+  country   String   @default("US")
+  phone     String?
+  isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()
-  @@map("products")
-  user User @relation(fields: [curatorId],references: [id])
-  subscriptions Subscription[]
+  
+  order Order[]
+  user User @relation(fields: [userId], references: [id])
+  @@map("shipping_addresses")
 }
-
-model Subscription{
-  id String @id @default(uuid())
-  subscriberId String 
-  productId String
-  status Status
-  nextBillingDate DateTime
-  createdAt DateTime @default(now())
-  user User @relation(fields: [subscriberId],references: [id]) 
-  product Product @relation(fields: [productId],references: [id])
-  @@map("subscriptions")
-}
-
 /*
 ====================
 Future Models (for Implementation in Week 3+)

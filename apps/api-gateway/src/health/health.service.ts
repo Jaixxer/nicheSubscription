@@ -4,5 +4,11 @@ import { ClientProxy } from '@nestjs/microservices';
 @Injectable()
 export class HealthService {
     constructor(@Inject('BILLING_SERVICE') private billingServ:ClientProxy){}
-    test(){}
+    test(){
+        this.billingServ.emit("Health","tests")
+        console.log("Client Module Working")
+    }    guardtest(dto){
+        const user = dto.user
+        return user
+    }
 }
