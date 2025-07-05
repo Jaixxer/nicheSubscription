@@ -4,9 +4,9 @@ import * as argon2 from 'argon2';
 import { UserRepository } from '../user/repositories/user.repository';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { CreateUserCommand } from '../user/commands';
-
+import { findUserByEmailQuery } from '../user/queries/find-user-by-email.query'
 
 @Injectable()
 export class AuthService {
@@ -14,8 +14,10 @@ export class AuthService {
         private user: UserRepository,
         private jwtService: JwtService,
         private config: ConfigService,
-        private commandBus: CommandBus
-    ) { }    async signup(dto: SignUpDto) {
+        private commandBus: CommandBus,
+        private queryBus: QueryBus
+    ) { }    
+    async signup(dto: SignUpDto) {
         const password = dto.password;
         const hash = await argon2.hash(password);
         dto.password = hash;
@@ -35,7 +37,7 @@ export class AuthService {
 
     }
     async login(dto: LoginDto) {
-        const user = await this.user.findUser(dto.email);
+        const user = await this.queryBus.execute(new findUserByEmailQuery(dto.email));
         if (!user) {
             throw new Error('Credentials are incorrect');
         }
@@ -54,7 +56,7 @@ export class AuthService {
         };
         const token = await this.jwtService.signAsync(payload, {
             secret: this.config.get<string>('JWT_ACCESS_SECRET'),
-            expiresIn: '15min' // Token expiration time
+            expiresIn: '1d' // Token expiration time
         });
         return{
             access_token:token

@@ -14,6 +14,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum RenewalPlan {
+  monthly
+  biweekly
+  weekly
+}
 
 
 enum Status {
@@ -53,15 +58,16 @@ model Product{
   stock            Int       @default(0)
   allowBackorder   Boolean   @default(false)
   curatorId        String 
-  maxSubscribers   Int
+  maxSubscribers   Int?
   category         String?
   availablePlans RenewalPlan[] 
   isActive         Boolean   @default(true)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt()
   
-  user         User          @relation(fields: [curatorId], references: [id])
+  user         User          @relation(fields: [curatorId], references: [id], onDelete: Cascade)
   subscriptions Subscription[]
+  boxItems     BoxItem[]
   orderItems   OrderItem[]
   @@map("products")
 }
@@ -73,7 +79,7 @@ model PricingTier{
   maxQuantity Int?
   pricePerUnit Float
   isActive Boolean @default(true)
-  product Product @relation(fields: [productId], references: [id])
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   @@unique([productId, plan, minQuantity])
   @@map("pricing_tiers")
 }
@@ -91,19 +97,24 @@ model Subscription {
   updatedAt       DateTime    @updatedAt()
   quantity        Int
 
-  user           User            @relation(fields: [subscriberId], references: [id])
-  product        Product         @relation(fields: [productId], references: [id]) 
+  user           User            @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade) 
   orders         Order[]
   paymentRecords PaymentRecord[]
   @@map("subscriptions")
   
 }
 
-enum RenewalPlan {
-  monthly
-  biweekly
-  weekly
+model BoxItem {
+  id          String   @id @default(uuid())
+  productId   String
+  name        String
+  description String?
+  quantity    Int
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@map("box_items")
 }
+
 
 model Role{
   id Int @id 
@@ -116,8 +127,8 @@ model UserRole{
   id Int @id @default(autoincrement())
   roleId Int
   userId String
-  role Role @relation(fields:[roleId],references: [id])
-  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields:[roleId],references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Order {
@@ -130,8 +141,8 @@ model Order {
   updatedAt     DateTime    @updatedAt()
   shippingAddressId String
   
-  user         User        @relation(fields: [userId], references: [id])
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   orderItems   OrderItem[]
   paymentRecords PaymentRecord[]
   shippingAddress ShippingAddress @relation(fields: [shippingAddressId],references: [id])
@@ -145,8 +156,8 @@ model OrderItem {
   quantity  Int
   price     Float
   
-  order   Order   @relation(fields: [orderId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   @@map("order_items")
 }
 
@@ -168,8 +179,8 @@ model PaymentRecord {
   stripePaymentId String?
   createdAt       DateTime      @default(now())
   
-  order        Order?        @relation(fields: [orderId], references: [id])
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  order        Order?        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   @@map("payment_records")
 }
 
@@ -190,7 +201,7 @@ model NotificationEvent {
   status      NotificationStatus @default(pending)
   createdAt   DateTime          @default(now())
   
-  recipient User @relation(fields: [recipientId], references: [id])
+  recipient User @relation(fields: [recipientId], references: [id], onDelete: Cascade)
   @@map("notification_events")
 }
 
@@ -225,7 +236,7 @@ model AuditLog {
   userAgent String?
   createdAt DateTime @default(now())
   
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@map("audit_logs")
 }
 
@@ -247,80 +258,6 @@ model ShippingAddress {
   updatedAt DateTime @updatedAt()
   
   order Order[]
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@map("shipping_addresses")
 }
-/*
-====================
-Future Models (for Implementation in Week 3+)
-====================
-
-1. PRODUCT
-----------
-id: UUID
-name: string
-description: string (optional)
-price: float
-stock: int
-allowBackorder: boolean (default: false)
-maxSubscribers: int (optional cap per product)
-curatorId: UUID → User.id
-createdAt: timestamp
-updatedAt: timestamp
-
-// Notes:
-// - Owned by a curator
-// - If stock = 0 and allowBackorder = false → disallow new subscriptions
-// - Low stock should trigger internal event
-
-
-2. SUBSCRIPTION
----------------
-id: UUID
-subscriberId: UUID → User.id
-productId: UUID → Product.id
-status: enum('active', 'cancelled', 'paused', 'pending', 'payment_failed')
-startDate: timestamp
-nextBillingDate: timestamp
-renewalPlan: enum('monthly', 'biweekly')
-autoRenew: boolean (default: true)
-createdAt: timestamp
-updatedAt: timestamp
-
-// Notes:
-// - Connects subscriber to a product (not directly to curator)
-// - Controlled via CQRS (commands, queries, events)
-// - Stripe integration handles billing, webhooks update status
-// - Deletion of a product will delete related subscriptions + trigger NotifyEvent
-
-
-3. NOTIFY_EVENT (internal pub/sub model)
------------------------------------------
-id: UUID
-type: enum('SUBSCRIPTION_CONFIRMED', 'PAYMENT_FAILED', 'PRODUCT_REMOVED', ...)
-recipientId: UUID → User.id
-payload: JSONB
-sentAt: timestamp (nullable)
-channel: enum('email', 'websocket', ...)
-
-// Notes:
-// - Used internally to pass cross-service notification intent
-// - Notification Microservice listens on Redis and acts accordingly
-
-
-4. SHIPPING_JOB (optional future)
----------------------------------
-id: UUID
-productId: UUID
-scheduledFor: timestamp
-status: enum('scheduled', 'processing', 'completed')
-packingListGenerated: boolean
-trackingNumbers: JSONB (optional future)
-
-// Notes:
-// - Created by @nestjs/schedule cron job per shipping cycle
-// - Emits internal event: ShippingCycleStartedEvent
-// - Might be useful for fulfillment tracking
-
-
-*/

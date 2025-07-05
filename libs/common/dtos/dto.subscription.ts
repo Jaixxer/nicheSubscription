@@ -1,8 +1,8 @@
-import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min } from "class-validator";
+import { IsBoolean, IsDate, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min } from "class-validator";
 import { RenewalPlan } from "./dto.product";
 import {PartialType} from "@nestjs/mapped-types"
 
-enum Status{
+export enum Status{
     active="active",
     cancelled="cancelled",
     paused='paused'
@@ -23,6 +23,8 @@ export class SubscriptionDto{
     @IsInt()
     @Min(1)
     quantity: number;
+    @IsDate()
+    nextBillingDate : Date 
 }
 
 export class UpdateSubscriptionDto extends PartialType(SubscriptionDto){}

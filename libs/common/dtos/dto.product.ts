@@ -16,7 +16,7 @@ export class PricingTierDto{
     @IsInt()
     @IsOptional()
     @Min(1)
-    maxQuanitiy: number;
+    maxQuantity?: number;
     @IsNumber({maxDecimalPlaces:2})
     @Min(0.01)
     pricePerUnit: number;
@@ -33,15 +33,15 @@ export class ProductDto{
     name : string;
     @IsString()
     @IsOptional()
-    description : string;
+    description? : string | null;
     @IsOptional()
     @IsBoolean()
-    allowBackorder:boolean;
+    allowBackorder?:boolean;
 
     @IsInt()
     @Min(1)
     @IsOptional()
-    maxSubscribers: number;
+    maxSubscribers?: number | null;
 
     @Min(0)
     @IsNotEmpty()
@@ -51,12 +51,15 @@ export class ProductDto{
     @IsArray()
     @ValidateNested({each:true})
     @Type(()=>PricingTierDto)
-    pricingTiers: PricingTierDto[];
+    pricingTiers: PricingTierDto[]
 
     
     @IsArray()
     @IsEnum(RenewalPlan,{each:true})
-    RenewalPlan: RenewalPlan[]
+    availablePlans: RenewalPlan[];
+    @IsString()
+    @IsOptional()
+    category?: string | null;
 
 }
 export class UpdateProductDto extends PartialType(ProductDto){}

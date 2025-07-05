@@ -1,6 +1,6 @@
 export enum UserRoles{
-       Curator = 'curator',
-       Subscriber = 'subscriber',
-       User= "user",
-       Admin="admin"
+       Curator = 'Curator',
+       Subscriber = 'Subscriber',
+       User= "User",
+       Admin="Admin"
 }
