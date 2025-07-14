@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get,Post, Req, UseGuards } from '@nestjs/common';
 import { HealthService } from './health.service';
 import { RolesGuard } from 'libs/common/guards';
 import { Roles } from 'libs/common/decorators';
@@ -18,5 +18,9 @@ export class HealthController {
     @Roles(UserRoles.User)
     guard(@Req() dto){
         return this.healthservice.guardtest(dto)
+    }
+    @Post('createstripecustomer')
+    createStripeCustomer(@Req() req) {
+        return this.healthservice.createStripeCustomer(req);
     }
 }
