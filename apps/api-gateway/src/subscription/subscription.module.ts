@@ -8,9 +8,10 @@ import { ProductRepository } from '../product/repository/repository.product';
 import { CqrsModule } from '@nestjs/cqrs';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { GetSubscriptionByUserQueryHandler } from './queryHandlers';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
-  imports: [ProductModule, CqrsModule, PrismaModule],
+  imports: [ProductModule, CqrsModule, PrismaModule, RedisModule],
   controllers: [SubscriptionController],
   providers: [
     SubscriptionQueryRepository,

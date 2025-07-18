@@ -193,4 +193,31 @@ export class UserRepository {
             throw new ForbiddenException("Failed to update user password");
         }
     }
+    async checkUserStripeId(userId: string): Promise<String | null> {
+        try {
+            const user = await this.prismaClient.user.findUnique({
+                where: { id: userId },
+                select: { stripeId: true }
+            });
+            if (!user) {
+                return null
+            }
+            return user.stripeId
+        } catch (error) {
+            console.error("Error checking user Stripe ID:", error);
+            throw new ForbiddenException("Failed to check user Stripe ID");
+        }
+    }
+    async addUserStripeId(userId: string, stripeId: string): Promise<boolean> {
+        try {
+            const user = await this.prismaClient.user.update({
+                where: { id: userId },
+                data: { stripeId: stripeId }
+            });
+            return !!user;
+        } catch (error) {
+            console.error("Error adding user Stripe ID:", error);
+            throw new ForbiddenException("Failed to add user Stripe ID");
+        }
+    }
 }

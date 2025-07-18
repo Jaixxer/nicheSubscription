@@ -6,7 +6,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 @Injectable()
 export class BoxItemCommandRepository{
     constructor(private prismaService:PrismaService){}
-    async createBoxItem(data): Promise<BoxItemDto> {
+    async createBoxItem(data): Promise<any> {
         try {
           const item= await this.prismaService.boxItem.create({
             data: {
@@ -49,9 +49,9 @@ export class BoxItemCommandRepository{
 
         }
     }
-    async updateBoxItem(data): Promise<void> {
+    async updateBoxItem(data): Promise<any> {
         try {
-            await this.prismaService.boxItem.update({
+            return await this.prismaService.boxItem.update({
                 where: { id: data.id },
                 data: {
                     name: data.name,

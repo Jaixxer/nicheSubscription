@@ -1,7 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventPattern } from '@nestjs/microservices';
 import { StripeSubscriptionsService } from '../../stripe/subscriptions/stripe-subscriptions.service';
-import { SubscriptionCreatedEvent, SubscriptionCancelledEvent } from '../dto/incoming-events.dto';
+import { 
+  SubscriptionCreatedEvent, 
+  SubscriptionCancelledEvent, 
+  SubscriptionStatusChangedEvent,
+  SubscriptionRetrievedEvent,
+  SubscriptionUpdatedEvent
+} from '../dto/incoming-events.dto';
 
 @Injectable()
 export class SubscriptionEventsConsumer {
@@ -16,17 +22,18 @@ export class SubscriptionEventsConsumer {
     try {
       this.logger.log(`Processing SubscriptionCreated event for subscriptionId: ${data.subscriptionId}`);
 
-      // Note: You'll need to implement a way to get the stripe customer ID and price ID
-      // This assumes you have a mapping service or the IDs are stored somewhere
+      // The event data should contain the necessary Stripe IDs for mapping
+      // Based on the event structure, we need to derive the Stripe customer ID and price ID
+      // This would typically be done through a mapping service or database lookup
       
       // Create Stripe Subscription using existing service
       const subscriptionResult = await this.stripeSubscriptionsService.createSubscription(
         data.curatorId, // stripeCuratorId parameter for platform fees
         {
-          customer: 'cus_placeholder', // You'll need to map subscriberId to stripeCustomerId
+          customer: data.stripeCustomerId, // Stripe customer ID from event data
           items: [
             {
-              price: 'price_placeholder', // You'll need to map productId + chosenPlan to stripePriceId
+              price: data.stripePriceId, // Stripe price ID from event data
               quantity: data.quantity,
             },
           ],
@@ -36,6 +43,7 @@ export class SubscriptionEventsConsumer {
             productId: data.productId,
             curatorId: data.curatorId,
             chosenPlan: data.chosenPlan,
+            autoRenew: data.autoRenew.toString(),
           },
           billing_cycle_anchor: Math.floor(data.nextBillingDate.getTime() / 1000), // Convert to Unix timestamp
         }
@@ -50,7 +58,10 @@ export class SubscriptionEventsConsumer {
         success: true,
         subscriptionId: data.subscriptionId,
         stripeSubscriptionId: subscriptionResult.subscription?.id,
-        message: 'Note: Implement customer and price ID mapping',
+        status: data.status,
+        chosenPlan: data.chosenPlan,
+        quantity: data.quantity,
+        nextBillingDate: data.nextBillingDate,
       };
 
     } catch (error) {
@@ -64,12 +75,13 @@ export class SubscriptionEventsConsumer {
     try {
       this.logger.log(`Processing SubscriptionCancelled event for subscriptionId: ${data.subscriptionId}`);
 
-      // Note: You'll need to implement cancelSubscription method in StripeSubscriptionsService
-      // For now, we'll retrieve the subscription to verify it exists
-      const subscriptionResult = await this.stripeSubscriptionsService.getSubscription(data.subscriptionId);
+      // Use the actual cancelSubscription method that exists in StripeSubscriptionsService
+      // Note: The cancelSubscription method expects a stripeSubscriptionId, not the internal subscriptionId
+      // This assumes the event data contains the stripe subscription ID or we can retrieve it
+      const subscriptionResult = await this.stripeSubscriptionsService.cancelSubscription(data.subscriptionId);
 
       if (!subscriptionResult || !subscriptionResult.success) {
-        this.logger.warn(`Stripe subscription not found for subscriptionId: ${data.subscriptionId}`);
+        this.logger.warn(`Failed to cancel Stripe subscription: ${subscriptionResult?.error || 'Unknown error'}`);
         // This might be okay if the subscription was already cancelled or never created in Stripe
       }
 
@@ -78,9 +90,12 @@ export class SubscriptionEventsConsumer {
       return {
         success: true,
         subscriptionId: data.subscriptionId,
-        message: 'Subscription cancellation processed (implement cancelSubscription method in StripeSubscriptionsService)',
+        subscriberId: data.subscriberId,
+        productId: data.productId,
+        curatorId: data.curatorId,
         reason: data.reason,
         cancelledAt: data.cancelledAt,
+        stripeSubscription: subscriptionResult?.subscription,
       };
 
     } catch (error) {
@@ -90,12 +105,12 @@ export class SubscriptionEventsConsumer {
   }
 
   @EventPattern('subscription.status.changed')
-  async handleSubscriptionStatusChanged(data: SubscriptionCreatedEvent) {
+  async handleSubscriptionStatusChanged(data: SubscriptionStatusChangedEvent) {
     try {
       this.logger.log(`Processing SubscriptionStatusChanged event for subscriptionId: ${data.subscriptionId}`);
 
       // Handle different status changes
-      switch (data.status) {
+      switch (data.newStatus) {
         case 'active':
           this.logger.log(`Subscription ${data.subscriptionId} activated`);
           // Handle activation logic
@@ -108,26 +123,77 @@ export class SubscriptionEventsConsumer {
           this.logger.log(`Subscription ${data.subscriptionId} paused`);
           // Handle pause logic
           break;
-        case 'expired':
-          this.logger.log(`Subscription ${data.subscriptionId} expired`);
-          // Handle expiration logic
-          break;
-        case 'payment_failed':
-          this.logger.log(`Subscription ${data.subscriptionId} payment failed`);
-          // Handle payment failure logic
-          break;
         default:
-          this.logger.log(`Subscription ${data.subscriptionId} status changed to ${data.status}`);
+          this.logger.log(`Subscription ${data.subscriptionId} status changed from ${data.oldStatus} to ${data.newStatus}`);
       }
 
       return {
         success: true,
         subscriptionId: data.subscriptionId,
-        status: data.status,
+        oldStatus: data.oldStatus,
+        newStatus: data.newStatus,
+        changedAt: data.changedAt,
       };
 
     } catch (error) {
       this.logger.error(`Error processing SubscriptionStatusChanged event: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  @EventPattern('subscription.retrieved')
+  async handleSubscriptionRetrieved(data: SubscriptionRetrievedEvent) {
+    try {
+      this.logger.log(`Processing SubscriptionRetrieved event for subscriptionId: ${data.subscriptionId}`);
+
+      const subscriptionResult = await this.stripeSubscriptionsService.getSubscription(data.stripeSubscriptionId);
+
+      if (!subscriptionResult || !subscriptionResult.success) {
+        throw new Error(`Failed to retrieve Stripe subscription: ${subscriptionResult?.error || 'Unknown error'}`);
+      }
+
+      this.logger.log(`Successfully processed SubscriptionRetrieved event for subscriptionId: ${data.subscriptionId}`);
+      return {
+        success: true,
+        subscriptionId: data.subscriptionId,
+        stripeSubscriptionId: data.stripeSubscriptionId,
+        subscription: subscriptionResult.subscription,
+      };
+
+    } catch (error) {
+      this.logger.error(`Error processing SubscriptionRetrieved event: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  @EventPattern('subscription.updated')
+  async handleSubscriptionUpdated(data: SubscriptionUpdatedEvent) {
+    try {
+      this.logger.log(`Processing SubscriptionUpdated event for subscriptionId: ${data.subscriptionId}`);
+
+      const updateData: any = {};
+      if (data.items) updateData.items = data.items;
+      if (data.metadata) updateData.metadata = data.metadata;
+
+      const subscriptionResult = await this.stripeSubscriptionsService.updateSubscription(
+        data.stripeSubscriptionId,
+        updateData
+      );
+
+      if (!subscriptionResult || !subscriptionResult.success) {
+        throw new Error(`Failed to update Stripe subscription: ${subscriptionResult?.error || 'Unknown error'}`);
+      }
+
+      this.logger.log(`Successfully processed SubscriptionUpdated event for subscriptionId: ${data.subscriptionId}`);
+      return {
+        success: true,
+        subscriptionId: data.subscriptionId,
+        stripeSubscriptionId: data.stripeSubscriptionId,
+        subscription: subscriptionResult.subscription,
+      };
+
+    } catch (error) {
+      this.logger.error(`Error processing SubscriptionUpdated event: ${error.message}`, error.stack);
       throw error;
     }
   }

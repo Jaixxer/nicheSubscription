@@ -1,9 +1,9 @@
-import { QueryHandler,ICommandHandler } from "@nestjs/cqrs";
+import { QueryHandler, IQueryHandler } from "@nestjs/cqrs";
 import { GetProductQuery } from "../queries/get-product.query";
 import { ProductRepository } from "../repository/repository.product";
 
 @QueryHandler(GetProductQuery)
-export class GetProductQueryHandler implements ICommandHandler<GetProductQuery> {
+export class GetProductQueryHandler implements IQueryHandler<GetProductQuery> {
     constructor(private productRepo: ProductRepository) {}
 
     async execute(query: GetProductQuery) {

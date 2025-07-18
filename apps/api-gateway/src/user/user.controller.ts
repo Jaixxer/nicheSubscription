@@ -1,13 +1,12 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post,Get, Req, UseGuards } from '@nestjs/common';
 import { UserRepository } from './repositories/user.repository';
 import { SignUpDto } from '../../../../libs/common/dtos/dto.auth';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { CreateUserCommand, UpdateUserEmailCommand, UpdateUserPasswordCommand, UpdateUserProfileCommand } from './commands';
+import { CreateConnectedAccountCommand, CreateUserCommand, UpdateUserEmailCommand, UpdateUserPasswordCommand, UpdateUserProfileCommand } from './commands';
 import { UpdateUserProfileDto } from 'libs/common/dtos/dto.user';
-import { JwtStrategy } from '../auth/strategy';
 import { findUserByEmailQuery } from './queries/find-user-by-email.query';
 import { AuthGuard } from '@nestjs/passport';
-import e from 'express';
+import { findUserByIdQuery } from './queries';
 
 @Controller('user')
 export class UserController {
@@ -55,4 +54,22 @@ export class UserController {
             dto.oldPassword,
             dto.newPassword, ))
     }
+    @Get('create-connected-account')
+    @UseGuards(AuthGuard('jwt'))
+    async createConnectedAccount( @Req() req) {
+        const curatorId = req.user.id;
+        const userData = await this.queryBus.execute(new findUserByIdQuery(curatorId))
+
+        try {
+            const command = await this.commandBus.execute(new CreateConnectedAccountCommand(
+                curatorId,
+                userData.email
+            ));
+            return { message: "Connected account created successfully", data: command };
+        } catch (error) {
+            console.error('Error creating connected account:', error);
+            return { message: "Failed to create connected account", error: error.message };
+        }
+    }
+
 }

@@ -32,6 +32,7 @@ enum Status {
 
 model User{
   id String @id @default(uuid())
+  stripeId String? @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()
   email String @unique 
@@ -52,6 +53,7 @@ model User{
 
 model Product{
   id               String    @id @default(uuid())
+  stripeId        String?   @unique
   name             String 
   description      String?
   pricingTiers     PricingTier[]
@@ -74,6 +76,7 @@ model Product{
 model PricingTier{
   id String @id @default(uuid())
   productId String
+  stripeId String? @unique
   plan RenewalPlan
   minQuantity Int
   maxQuantity Int?
@@ -88,9 +91,11 @@ model Subscription {
   id              String      @id @default(uuid())
   subscriberId    String 
   productId       String
+  stripeSubscriptionId String? @unique 
   status          Status
   startDate       DateTime    @default(now())
   nextBillingDate DateTime
+  lastBillingDate DateTime?
   chosenPlan     RenewalPlan  
   autoRenew       Boolean     @default(true)
   createdAt       DateTime    @default(now())

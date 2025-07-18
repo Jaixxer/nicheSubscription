@@ -9,8 +9,10 @@ import { UpdateProductCommandHandler } from './commandHandlers/update-product-co
 import { GetProductsByCuratorIdQueryHandler } from './queryHandlers/get-product-by-curator-id.handler';
 import { GetProductByCategoryQueryHandler } from './queryHandlers/get-products-by-category.handler';
 import { DeleteProductHandler } from './commandHandlers/delete-product-command.handler';
+import { RedisModule } from '../redis/redis.module';
+
 @Module({
-  imports:[PrismaModule,CqrsModule],
+  imports:[PrismaModule,CqrsModule,RedisModule],
   providers: [ProductRepository,CreateProductCommandHandler,GetProductQueryHandler,UpdateProductCommandHandler,GetProductsByCuratorIdQueryHandler,GetProductByCategoryQueryHandler,DeleteProductHandler],
   controllers: [ProductController]
 })

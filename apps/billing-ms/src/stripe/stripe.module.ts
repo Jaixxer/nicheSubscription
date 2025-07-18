@@ -4,10 +4,13 @@ import { STRIPE_SERVICE } from './constant';
 import { StripeCustomerService } from './customers/stripe-customers.service';
 import Stripe from 'stripe';
 import { StripeService } from './stripe.service';
+import StripeProductService from './products/stripe-products.service';
+import { StripePricesService } from './prices/stripe-prices.service';
+import { StripeSubscriptionsService } from './subscriptions/stripe-subscriptions.service';
 
 @Module({
-  providers: [StripeService, StripeCustomerService],
-  exports: [StripeService, StripeCustomerService, STRIPE_SERVICE]
+  providers: [StripeService, StripeCustomerService, StripeProductService, StripePricesService, StripeSubscriptionsService],
+  exports: [StripeService, StripeCustomerService, StripeProductService, StripePricesService, StripeSubscriptionsService, STRIPE_SERVICE]
 })
 export class StripeModule {
   static forRoot(): DynamicModule {
@@ -24,7 +27,7 @@ export class StripeModule {
         },
         inject: [ConfigService]  
       }],
-      exports: [STRIPE_SERVICE, StripeService, StripeCustomerService]
+      exports: [STRIPE_SERVICE, StripeService, StripeCustomerService, StripeProductService, StripePricesService, StripeSubscriptionsService]
     };
   }
 }

@@ -5,15 +5,19 @@ import Stripe from "stripe";
 @Injectable()
 export default class StripeProductService{
     constructor(@Inject(STRIPE_SERVICE) private readonly StripeService:Stripe){}
-    async createProduct(data:Stripe.ProductCreateParams){
+    async createProduct(data:Stripe.ProductCreateParams, StripeAccount: string) {
         try {
             console.log('Creating product with data:', data);
+            console.log('Using Stripe Account:', StripeAccount);
             const product = await this.StripeService.products.create({
                 name: data.name,
                 description: data.description || undefined,
                 images: data.images || [],
                 active: data.active || true,
-            });
+            },
+        {
+            stripeAccount: StripeAccount 
+        });
             console.log('Product created successfully:', product);
             return {message:"Product created successfully", success: true,product:product};
         } catch (error) {

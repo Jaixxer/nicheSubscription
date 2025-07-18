@@ -7,6 +7,7 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { CreateProductCommand, UpdateProductCommand,DeleteProductCommand } from './commands';
 import { GetProductQuery,GetProductsByCuratorIdQuery,getProductsByCategoryQuery } from './queries/index';
 import { UpdateProductDto } from 'libs/common/dtos/dto.product';
+import { CheckUserStripIdQuery } from '../user/queries';
 
 @Controller('product')
 export class ProductController {
@@ -17,9 +18,11 @@ export class ProductController {
     async createProduct(@Body() dto, @Req() req) {
         try {
             const id = req.user.id;
+            const curatorStripeId = await this.queryBus.execute(new CheckUserStripIdQuery(id));
             const { name, stock, pricingTiers, availablePlans, allowBackorder, maxSubscribers, description,category } = dto;
             const command = await this.commandBus.execute(new CreateProductCommand(
                 id,
+                curatorStripeId,
                 name,
                 stock,
                 pricingTiers,

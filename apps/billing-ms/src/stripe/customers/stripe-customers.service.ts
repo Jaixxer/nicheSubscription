@@ -1,9 +1,11 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { STRIPE_SERVICE } from './../constant';
 import Stripe from "stripe";
 import { CreateCustomerDto } from "./dto.stripe-customers";
 @Injectable()
 export class StripeCustomerService {
+    private readonly logger = new Logger(StripeCustomerService.name);
+    
     constructor(@Inject(STRIPE_SERVICE) private readonly stripeService: Stripe) { }
 
     async createConnectedAccount(email: string): Promise<{
@@ -14,6 +16,8 @@ export class StripeCustomerService {
     accountLink?: Stripe.AccountLink;
   }> {
     try {
+      this.logger.log(`Creating connected account for email: ${email}`);
+      
       const account = await this.stripeService.accounts.create({
         type: 'express',
         country: 'US',
@@ -22,15 +26,17 @@ export class StripeCustomerService {
           transfers: { requested: true },
         },
       });
+      
+      this.logger.log(`Connected account created with ID: ${account.id}`);
+      
       const accountLink = await this.stripeService.accountLinks.create({
-  account: account.id,
-  refresh_url: 'http://localhost:3000/onboarding/refresh',
-  return_url: 'http://localhost:3000/onboarding/return',
-  type: 'account_onboarding',
-});
+        account: account.id,
+        refresh_url: 'http://localhost:3000/onboarding/refresh',
+        return_url: 'http://localhost:3000/onboarding/return',
+        type: 'account_onboarding',
+      });
 
-
-      console.log('Connected account created:', account.id);
+      this.logger.log(`Account link created for account: ${account.id}`);
 
       return {
         message: 'Curator connected account created successfully',
@@ -40,18 +46,18 @@ export class StripeCustomerService {
       };
     } catch (error) {
       if (error instanceof Stripe.errors.StripeError) {
-        console.error('Stripe error:', error.message);
+        this.logger.error(`Stripe error creating connected account for ${email}: ${error.message}`, error.stack);
         return {
           message: 'Stripe error occurred while creating connected account',
           success: false,
           error: error.message,
         };
       } else {
-        console.error('Unexpected error:', error);
+        this.logger.error(`Unexpected error creating connected account for ${email}: ${error.message}`, error.stack);
         return {
           message: 'Unexpected error occurred',
           success: false,
-          error: 'Internal server error',
+          error: error.message,
         };
       }
     }
@@ -59,7 +65,8 @@ export class StripeCustomerService {
 
     async createCustomer(data: CreateCustomerDto) {
         try {
-            console.log('Creating customer with data:', data);
+            this.logger.log(`Creating customer with email: ${data.email}`);
+            
             const customer = await this.stripeService.customers.create({
                 email: data.email,
                 name: data.name,
@@ -67,39 +74,52 @@ export class StripeCustomerService {
                 phone: data.phone || undefined,
                 shipping: data.shipping || undefined,
             });
-            console.log('Customer created successfully:', customer);
+            
+            this.logger.log(`Customer created successfully with ID: ${customer.id}`);
             return { message: "Customer created successfully", success: true, customer: customer };
         } catch (error) {
             if (error instanceof Stripe.errors.StripeError) {
-                console.error('Stripe error occurred:', error.message);
+                this.logger.error(`Stripe error creating customer for ${data.email}: ${error.message}`, error.stack);
                 return { message: "An error occured while trying to create your stripe account", success: false, error: error.message };
+            } else {
+                this.logger.error(`Unexpected error creating customer for ${data.email}: ${error.message}`, error.stack);
+                return { message: "An unexpected error occurred", success: false, error: error.message };
             }
-
         }
     }
     async getCustomer(customerId: string) {
         try {
-            console.log('Retrieving customer with ID:', customerId);
+            this.logger.log(`Retrieving customer with ID: ${customerId}`);
+            
             const customer = await this.stripeService.customers.retrieve(customerId);
-            console.log('Customer retrieved successfully:', customer);
+            
+            this.logger.log(`Customer retrieved successfully: ${customerId}`);
             return { message: "Customer retrieved successfully", success: true, customer: customer };
         } catch (error) {
             if (error instanceof Stripe.errors.StripeError) {
-                console.error('Stripe error occurred:', error.message);
+                this.logger.error(`Stripe error retrieving customer ${customerId}: ${error.message}`, error.stack);
                 return { message: "An error occured while trying to retrieve your stripe account", success: false, error: error.message };
+            } else {
+                this.logger.error(`Unexpected error retrieving customer ${customerId}: ${error.message}`, error.stack);
+                return { message: "An unexpected error occurred", success: false, error: error.message };
             }
         }
     }
     async updateCustomer(customerId: string, data: Stripe.CustomerUpdateParams) {
         try {
-            console.log('Updating customer with ID:', customerId, 'and data:', data);
+            this.logger.log(`Updating customer with ID: ${customerId}`);
+            
             const customer = await this.stripeService.customers.update(customerId, data);
-            console.log('Customer updated successfully:', customer);
+            
+            this.logger.log(`Customer updated successfully: ${customerId}`);
             return { message: "Customer updated successfully", success: true, customer: customer };
         } catch (error) {
             if (error instanceof Stripe.errors.StripeError) {
-                console.error('Stripe error occurred:', error.message);
+                this.logger.error(`Stripe error updating customer ${customerId}: ${error.message}`, error.stack);
                 return { message: "An error occured while trying to update your stripe account", success: false, error: error.message };
+            } else {
+                this.logger.error(`Unexpected error updating customer ${customerId}: ${error.message}`, error.stack);
+                return { message: "An unexpected error occurred", success: false, error: error.message };
             }
         }
     }

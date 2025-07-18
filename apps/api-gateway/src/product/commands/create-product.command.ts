@@ -4,6 +4,7 @@ import { BaseCommand } from "../../common/cqrs/base.command";
 export class CreateProductCommand extends BaseCommand {
   constructor(
     public readonly curatorId: string,
+    public readonly curatorStripeId: Promise<string | null>,
     public readonly name: string,
     public readonly stock: number,
     public readonly pricingTiers: {plan:RenewalPlan,minQuantity:number,pricePerUnit:number,maxQuantity?:number,isActive?:boolean}[],

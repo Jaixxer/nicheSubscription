@@ -10,9 +10,11 @@ import { CreateBoxItemHandler } from './commandHandlers/create-box-item.handler'
 import { ProductRepository } from '../product/repository/repository.product';
 import { RemoveBoxItemHandler } from './commandHandlers/remove-box-item.handler';
 import { UpdateBoxItemHandler } from './commandHandlers/update-box-item.handler';
+import { RedisModule } from '../redis/redis.module';
+
 @Module({
-  imports: [CqrsModule,PrismaModule,ProductModule],
+  imports: [CqrsModule, PrismaModule, ProductModule, RedisModule],
   controllers: [BoxItemController],
-  providers: [ProductRepository,BoxItemCommandRepository, BoxItemQueryRepository,GetBoxItemsByProductIdHandler,CreateBoxItemHandler,RemoveBoxItemHandler,UpdateBoxItemHandler],
+  providers: [ProductRepository, BoxItemCommandRepository, BoxItemQueryRepository, GetBoxItemsByProductIdHandler, CreateBoxItemHandler, RemoveBoxItemHandler, UpdateBoxItemHandler],
 })
 export class BoxItemModule {}

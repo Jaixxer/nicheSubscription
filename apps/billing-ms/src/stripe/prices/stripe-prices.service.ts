@@ -5,13 +5,15 @@ import Stripe from "stripe";
 @Injectable()
 export class StripePricesService{
     constructor(@Inject(STRIPE_SERVICE) private readonly stripeService:Stripe) {}
-    async createPrices(data: Stripe.PriceCreateParams[]) {
+    async createPrices(data: Stripe.PriceCreateParams[],options:{stripeAccount:string | undefined}) {
         try {
             console.log('Creating prices with data:', data);
+            console.log('Using Stripe Account:', options?.stripeAccount || 'default');
            let array = new Array()
             for (const priceData of data) {
                 console.log('Creating price with data:', priceData);
-                const price = await this.stripeService.prices.create(priceData);
+                const price = await this.stripeService.prices.create(priceData,{
+                    stripeAccount: options.stripeAccount                 });
                 array.push(price)
                 console.log('Price created successfully:', price);
             }

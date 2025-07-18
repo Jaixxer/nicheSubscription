@@ -33,7 +33,8 @@ export class ProductRepository {
                     curatorId: id
                 },
                 include: {
-                    pricingTiers: true
+                    pricingTiers: true,
+                    
                 }
             });
             return { message: "Product created successfully", product: productCreation };
@@ -224,4 +225,32 @@ export class ProductRepository {
             }
             throw new Error(`Failed to delete product: ${error.message}`);
         }
-}}
+
+}
+    async addStripeIdToProduct(productId: string, stripeProductId: string) {
+        try {
+            const updatedProduct = await this.prismaService.product.update({
+                where: { id: productId },
+                data: { stripeId: stripeProductId },
+            });
+            return updatedProduct;
+        } catch (error) {
+            console.error(`Error adding Stripe ID to product ${productId}:`, error);
+            throw new Error(`Failed to add Stripe ID to product: ${error.message}`);
+        }
+    }
+    async addStripeIdToPricingTiers(productId: string, pricingTiers: Array<{ pricingTierId: string, stripePriceId: string }>) {
+        try {
+            const updatedTiers = await Promise.all(pricingTiers.map(tier => 
+                this.prismaService.pricingTier.update({
+                    where: { id: tier.pricingTierId },
+                    data: { stripeId: tier.stripePriceId }
+                })
+            ));
+            return updatedTiers;
+        } catch (error) {
+            console.error(`Error adding Stripe IDs to pricing tiers for product ${productId}:`, error);
+            throw new Error(`Failed to add Stripe IDs to pricing tiers: ${error.message}`);
+        }
+    }
+}
