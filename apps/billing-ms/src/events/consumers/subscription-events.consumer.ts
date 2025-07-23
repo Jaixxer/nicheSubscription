@@ -45,7 +45,7 @@ export class SubscriptionEventsConsumer {
             chosenPlan: data.chosenPlan,
             autoRenew: data.autoRenew.toString(),
           },
-          billing_cycle_anchor: Math.floor(data.nextBillingDate.getTime() / 1000), // Convert to Unix timestamp
+          // billing_cycle_anchor removed - Stripe will handle billing based on price interval
         }
       );
 

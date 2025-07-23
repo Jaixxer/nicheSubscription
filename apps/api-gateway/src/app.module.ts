@@ -14,7 +14,7 @@ import { ProductWizardModule } from './product-wizard/product-wizard.module';
 @Module({
   imports: [ConfigModule.forRoot({
     isGlobal: true
-  }),PrismaModule, RedisModule,HealthModule, AuthModule, UserModule,CqrsModule.forRoot(), TestModule,ProductModule,SubscriptionModule,BoxItemModule, ProductWizardModule],
+  }),PrismaModule, RedisModule,HealthModule, AuthModule, UserModule,CqrsModule.forRoot(), TestModule,ProductModule,SubscriptionModule,BoxItemModule, ProductWizardModule,],
   controllers: [],
   providers:[],
   exports: [],

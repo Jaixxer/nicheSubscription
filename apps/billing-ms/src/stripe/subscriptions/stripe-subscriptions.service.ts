@@ -14,26 +14,27 @@ export class StripeSubscriptionsService{
             const subscription = await this.stripeService.subscriptions.create({
                 customer: data.customer,
                 items: data.items,
-                backdate_start_date: data.backdate_start_date || undefined,
+                metadata: data.metadata || {},
                 payment_settings: {
                     payment_method_types: ["card"],
-                    save_default_payment_method:'on_subscription'
-
+                    save_default_payment_method: 'on_subscription'
                 },
-                transfer_data:{
+                transfer_data: {
                     destination: stripeCuratorId
                 },
                 application_fee_percent: 4,
-                default_payment_method: data.default_payment_method || undefined,
-                collection_method: data.collection_method || 'charge_automatically',
+                collection_method: data.collection_method || 'charge_automatically'
             });
             console.log('Subscription created successfully:', subscription);
             return {message:"Subscription created successfully", success: true, subscription: subscription};
         } catch (error) {
+            console.error('Error creating Stripe subscription:', error);
             if (error instanceof Stripe.errors.StripeError) {
                 console.error('Stripe error occurred:', error.message);
                 return {message:"An error occurred while trying to create your stripe subscription", success: false, error: error.message};
             }
+            // Handle non-Stripe errors
+            return {message:"An error occurred while trying to create your stripe subscription", success: false, error: error.message || 'Unknown error'};
         }
     }
     async getSubscription(subscriptionId: string) {

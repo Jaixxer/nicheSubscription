@@ -25,7 +25,7 @@ export class ProductEventsConsumer {
     try {
       this.logger.log(`Processing ProductCreatedWithPlans event for productId: ${data.productId}`);
 
-      // Create Stripe Product
+      // Create Stripe Product in platform account (no stripeAccount parameter)
       const productResult = await this.stripeProductService.createProduct({
         name: data.productCreatedEvent.name,
         description: data.productCreatedEvent.description,
@@ -34,7 +34,7 @@ export class ProductEventsConsumer {
           productId: data.productCreatedEvent.productId,
           curatorId: data.productCreatedEvent.curatorId,
           category: data.productCreatedEvent.category || '',
-        },}, data.curatorStripeId);
+        },});
 
       if (!productResult || !productResult.success || !productResult.product) {
         throw new Error(`Failed to create Stripe product: ${productResult?.error || 'Unknown error'}`);
@@ -65,7 +65,8 @@ export class ProductEventsConsumer {
         }));
 
       if (priceCreateParams.length > 0) {
-        const pricesResult = await this.stripePricesService.createPrices(priceCreateParams,{stripeAccount: data.curatorStripeId});
+        // Create prices in platform account (no stripeAccount parameter)
+        const pricesResult = await this.stripePricesService.createPrices(priceCreateParams);
 
         if (!pricesResult || !pricesResult.success || !pricesResult.prices) {
           throw new Error(`Failed to create Stripe prices: ${pricesResult?.error || 'Unknown error'}`);
@@ -102,7 +103,7 @@ export class ProductEventsConsumer {
     try {
       this.logger.log(`Processing PricingTierActivated event for pricingTierId: ${data.pricingTierId}`);
 
-      // Create Stripe Price for the activated pricing tier
+      // Create Stripe Price for the activated pricing tier in platform account
       const priceResult = await this.stripePricesService.createPrices([{
         product: data.stripeProductId, // Stripe product ID from event data
         unit_amount: Math.round(data.pricePerUnit * 100),
@@ -122,7 +123,7 @@ export class ProductEventsConsumer {
           minQuantity: data.minQuantity.toString(),
           maxQuantity: data.maxQuantity?.toString() || '',
         },
-      }],{stripeAccount: data.curatorStripeId});
+      }]);
 
       if (!priceResult || !priceResult.success || !priceResult.prices || priceResult.prices.length === 0) {
         throw new Error(`Failed to create Stripe price for activated pricing tier: ${priceResult?.error || 'Unknown error'}`);
@@ -146,7 +147,7 @@ export class ProductEventsConsumer {
     try {
       this.logger.log(`Processing PricingTierUpdated event for pricingTierId: ${data.pricingTierId}`);
 
-      // Create new Stripe Price (Stripe doesn't allow price updates, only creation of new prices)
+      // Create new Stripe Price in platform account (Stripe doesn't allow price updates, only creation of new prices)
       const priceResult = await this.stripePricesService.createPrices([{
         product: data.stripeProductId, // Stripe product ID from event data
         unit_amount: Math.round(data.pricePerUnit * 100),
@@ -166,7 +167,7 @@ export class ProductEventsConsumer {
           minQuantity: data.minQuantity.toString(),
           maxQuantity: data.maxQuantity?.toString() || '',
         },
-      }],{stripeAccount: data.curatorStripeId});
+      }]);
 
       if (!priceResult || !priceResult.success || !priceResult.prices || priceResult.prices.length === 0) {
         throw new Error(`Failed to create updated Stripe price: ${priceResult?.error || 'Unknown error'}`);

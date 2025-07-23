@@ -32,7 +32,7 @@ export class PriceEventsConsumer {
         metadata: data.metadata || {},
       };
 
-      const priceResult = await this.stripePricesService.createPrices([priceCreateParams]);
+      const priceResult = await this.stripePricesService.createPrices([priceCreateParams],);
 
       if (!priceResult || !priceResult.success || !priceResult.prices || priceResult.prices.length === 0) {
         throw new Error(`Failed to create Stripe price: ${priceResult?.error || 'Unknown error'}`);

@@ -82,14 +82,14 @@ export class UserRepository {
             console.log(error)
         }
     }
-    async getRolesId(role: string): Promise<number[]> {
+    async getRolesId(role: string[]): Promise<number[]> {
         try {
             console.log("Fetching roles for:", role)
             const roles = await this.prismaClient.role.findMany({
                 where: {
                     OR: [
-                        { role: 'User' },
-                        { role: role }
+                        { role: role[0] },
+                        { role: role[1] }
                     ]
                 },
                 select: {
@@ -105,7 +105,7 @@ export class UserRepository {
             throw error
         }
     }
-    async updateUserProfile(id,firstName,lastName,phone){
+    async updateUserProfile(id,firstName?:string,lastName?:string,phone?:string){
         try {
             const user = await this.prismaClient.user.update({
                 where: {
@@ -218,6 +218,92 @@ export class UserRepository {
         } catch (error) {
             console.error("Error adding user Stripe ID:", error);
             throw new ForbiddenException("Failed to add user Stripe ID");
+        }
+    }
+    async searchUsers(params: {
+        email?: string;
+        role?: string;
+        firstName?: string;
+        lastName?: string;
+        isActive?: boolean;
+        subscription?:string,
+        BillingStartDate?:Date,
+        BillingEndDate?:Date,
+        offset?: number;
+        limit?: number;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+    }): Promise<any[]> {
+        const {
+            email,
+            role,
+            firstName,
+            lastName,
+            isActive,
+            subscription,
+            BillingStartDate,
+            BillingEndDate,
+            offset ,
+            limit ,
+            sortBy ,
+            sortOrder
+        } = params;
+
+        const where: any = {};
+        if (email) where.email = { contains: email, mode: 'insensitive' };
+        if (role) where.roles = { some: { role: role } };
+        if (firstName) where.firstName = { contains: firstName, mode: 'insensitive' };
+        if (lastName) where.lastName = { contains: lastName, mode: 'insensitive' };
+        if (isActive !== undefined) where.isActive = isActive;
+        if (subscription) where.subscription = { contains: subscription, mode: 'insensitive' };
+        if (BillingStartDate && BillingEndDate) {
+            where.nextBillingDate = {
+                gte: BillingStartDate,
+                lte: BillingEndDate
+            };
+        } 
+
+        const users = await this.prismaClient.user.findMany({
+            where,
+            skip: offset,
+            take: limit,
+            orderBy: {
+                [sortBy as string]: sortOrder
+            },
+            include: {
+                userRoles: {
+                    select: {
+                        role: true
+                    }
+                }
+            }
+        });
+
+        return users;
+    }
+    async changeUserStatus(id: string) {
+        try {
+            // Fetch current user to get current isActive value
+            const currentUser = await this.prismaClient.user.findUnique({
+                where: { id: id },
+                select: { isActive: true }
+            });
+            if (!currentUser) {
+                throw new ForbiddenException("User not found");
+            }
+            const user = await this.prismaClient.user.update({
+                where: { id: id },
+                data: { isActive: !currentUser.isActive },
+                select: {
+                    id: true,
+                    email: true,
+                    isActive: true
+                }
+            });
+            return user;
+        } catch (error) {
+            console.error("Error changing user status:", error);
+            throw new ForbiddenException("Failed to change user status");
         }
     }
 }

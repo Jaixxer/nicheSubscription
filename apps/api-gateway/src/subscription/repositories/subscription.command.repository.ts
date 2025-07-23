@@ -61,4 +61,19 @@ export class SubscriptionCommandRepository {
             throw error;
         }
     }
+    async addSubscriptionStripeId(subscriptionId: string, stripeSubscriptionId: string): Promise<void> {
+        try {
+            await this.prismaService.subscription.update({
+                where: { id: subscriptionId },
+                data: { stripeSubscriptionId }
+            });
+        } catch (error) {
+            if (error instanceof PrismaClientKnownRequestError) {
+                if (error.code === 'P2025') {
+                    throw new Error('Subscription not found.');
+                }
+            }
+            throw error;
+        }
+    }
 }

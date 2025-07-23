@@ -10,10 +10,12 @@ import { GetProductsByCuratorIdQueryHandler } from './queryHandlers/get-product-
 import { GetProductByCategoryQueryHandler } from './queryHandlers/get-products-by-category.handler';
 import { DeleteProductHandler } from './commandHandlers/delete-product-command.handler';
 import { RedisModule } from '../redis/redis.module';
+import { GetAllProductsQueryHandler } from './queryHandlers/get-all-products.handler';
+import { DeleteProductByAdminCommandHandler } from './commandHandlers/admin/delete-product-command.handler';
 
 @Module({
   imports:[PrismaModule,CqrsModule,RedisModule],
-  providers: [ProductRepository,CreateProductCommandHandler,GetProductQueryHandler,UpdateProductCommandHandler,GetProductsByCuratorIdQueryHandler,GetProductByCategoryQueryHandler,DeleteProductHandler],
+  providers: [ProductRepository,CreateProductCommandHandler,GetProductQueryHandler,UpdateProductCommandHandler,GetProductsByCuratorIdQueryHandler,GetProductByCategoryQueryHandler,DeleteProductHandler,GetAllProductsQueryHandler,DeleteProductByAdminCommandHandler],
   controllers: [ProductController]
 })
 export class ProductModule {}

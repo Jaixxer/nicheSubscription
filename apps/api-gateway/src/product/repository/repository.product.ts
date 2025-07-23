@@ -62,13 +62,21 @@ export class ProductRepository {
                     description: true || undefined, // Convert null to undefined
                     category: true,
                     availablePlans: true,
+                    stripeId: true,
                     pricingTiers: {
                         select: {
+                            id: true,
                             plan: true,
                             minQuantity: true,
                             maxQuantity: true,
                             pricePerUnit: true,
-                            isActive: true
+                            isActive: true,
+                            stripeId: true
+                        }
+                    },
+                    user:{
+                        select: {
+                            stripeId: true
                         }
                     }
                 }
@@ -177,11 +185,14 @@ export class ProductRepository {
         }
 
     }
-    async findProductsByCategory(category:string,limit:number,offset:number){
+    async findProductsByCategory(category?:string,limit?:number,offset?:number){
         try {
+            if(category === 'all'){
+                category = undefined; // If 'all', we don't filter by category
+            }
             const products = await this.prismaService.product.findMany({
                 where:{
-                    category:category
+                    ...(category ? { category } : {})
                 },
                 take: limit,
                 skip: offset,

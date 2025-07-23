@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ProductEventsConsumer } from '../consumers/box-events.consumer';
 import { SubscriptionEventsConsumer } from '../consumers/subscription-events.consumer';
@@ -36,7 +36,8 @@ import { StripePaymentService } from '../../stripe/payment-methods/stripe-paymen
   providers: [
     PaymentEventsProducer,
     SubscriptionEventsProducer,
-    StripePaymentService
+    StripePaymentService,
+    
   ],
   exports: [
     PaymentEventsProducer,

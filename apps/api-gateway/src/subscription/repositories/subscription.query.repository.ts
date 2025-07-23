@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'apps/api-gateway/prisma/prisma.service';
+import { stat } from 'fs';
 
 @Injectable()
 export class SubscriptionQueryRepository {
@@ -25,6 +26,33 @@ export class SubscriptionQueryRepository {
                 updatedAt: true,
             
             }
+        });
+    }
+    async getSubscriptions(status, limit?: number , page?: number ) {
+        const take = limit || 10;
+        const skip = page ? (page - 1) * take : 0;
+        if (status ==='all'){
+            status = undefined; // If 'all', we don't filter by status
+        }
+        return this.prismaService.subscription.findMany({
+            where:{
+                ...(status ? { status } : {}),
+            },
+            take,
+            skip,
+            select: {
+                id: true,
+                subscriberId: true,
+                productId: true,
+                status: true,
+                autoRenew: true,
+                chosenPlan: true,
+                quantity: true,
+                nextBillingDate: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+            orderBy: { createdAt: 'desc' }
         });
     }
     async getSubscriptionByUser(subscriberId: string) {

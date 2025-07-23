@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EventPattern } from '@nestjs/microservices';
+import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { StripePaymentService } from '../../stripe/payment-methods/stripe-payment-service';
 import {
   SetupIntentCreatedEvent,
@@ -14,7 +14,7 @@ export class PaymentMethodEventsConsumer {
     private readonly stripePaymentService: StripePaymentService,
   ) {}
 
-  @EventPattern('setup.intent.created')
+  @MessagePattern('setup.intent.created')
   async handleSetupIntentCreated(data: SetupIntentCreatedEvent) {
     try {
       this.logger.log(`Processing SetupIntentCreated event for customerId: ${data.customerId}`);
@@ -26,16 +26,62 @@ export class PaymentMethodEventsConsumer {
       }
 
       this.logger.log(`Successfully processed SetupIntentCreated event for customerId: ${data.customerId}`);
-      return {
+      return { 
         success: true,
         customerId: data.customerId,
+        clientSecret: setupIntentResult.setupIntent.client_secret,
         stripeCustomerId: data.stripeCustomerId,
-        setupIntent: setupIntentResult.setupIntent,
+        
       };
 
     } catch (error) {
       this.logger.error(`Error processing SetupIntentCreated event: ${error.message}`, error.stack);
       throw error;
+    }
+  }
+
+  @MessagePattern('setup.intent.confirmed')
+  async handleSetupIntentConfirmed(data:{setupIntentId:string,paymentMethodId:string,stripeCustomerId:string}){
+    try{
+      this.logger.log(`Processing SetupIntentConfirmed event for setupIntentId: ${data.setupIntentId}`);
+      const confirmSetupIntent= await this.stripePaymentService.confirmSetupIntent(data)
+      
+      if(!confirmSetupIntent || !confirmSetupIntent.success){
+        this.logger.error(`Failed to confirm setup intent for setupIntentId: ${data.setupIntentId}`, confirmSetupIntent);
+        return {
+          success: false,
+          error: confirmSetupIntent?.error || 'Failed to confirm setup intent'
+        };
+      }
+
+      this.logger.log(`Successfully confirmed setup intent for setupIntentId: ${data.setupIntentId}`)
+      
+      // Set default payment method
+      const setDefaultPaymentMethod = await this.stripePaymentService.setDefaultPaymentMethod(
+        data.stripeCustomerId,
+        data.paymentMethodId
+      );
+      
+      if (!setDefaultPaymentMethod || !setDefaultPaymentMethod.success) {
+        this.logger.error(`Failed to set default payment method for customerId: ${data.stripeCustomerId}`, setDefaultPaymentMethod);
+        return {
+          success: false,
+          error: setDefaultPaymentMethod?.error || 'Failed to set default payment method'
+        };
+      }
+      
+      this.logger.log(`Successfully set default payment method for customerId: ${data.stripeCustomerId}`);
+      return {
+        success: true,
+        message: 'Setup intent confirmed and default payment method set successfully'
+      };
+      
+    }catch(error){
+      this.logger.error(`Error processing SetupIntentConfirmed event: ${error.message}`, error.stack);
+      return {
+        success: false,
+        error: error.message
+      };
     }
   }
 

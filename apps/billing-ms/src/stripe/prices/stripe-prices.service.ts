@@ -5,25 +5,31 @@ import Stripe from "stripe";
 @Injectable()
 export class StripePricesService{
     constructor(@Inject(STRIPE_SERVICE) private readonly stripeService:Stripe) {}
-    async createPrices(data: Stripe.PriceCreateParams[],options:{stripeAccount:string | undefined}) {
+    async createPrices(data: Stripe.PriceCreateParams[],) {
         try {
             console.log('Creating prices with data:', data);
-            console.log('Using Stripe Account:', options?.stripeAccount || 'default');
-           let array = new Array()
+           
+            
+            let array = new Array()
             for (const priceData of data) {
                 console.log('Creating price with data:', priceData);
-                const price = await this.stripeService.prices.create(priceData,{
-                    stripeAccount: options.stripeAccount                 });
+                
+                
+                
+                const price = await this.stripeService.prices.create(priceData);
                 array.push(price)
                 console.log('Price created successfully:', price);
             }
             console.log('Prices created successfully:');
             return {message:"Prices created successfully", success: true, prices: array};
         } catch (error) {
+            console.error('Error creating Stripe prices:', error);
             if (error instanceof Stripe.errors.StripeError) {
                 console.error('Stripe error occurred:', error.message);
                 return {message:"An error occurred while trying to create your stripe prices", success: false, error: error.message};
             }
+            // Handle non-Stripe errors
+            return {message:"An error occurred while trying to create your stripe prices", success: false, error: error.message || 'Unknown error'};
         }
     }
     async getPrice(priceId: string) {

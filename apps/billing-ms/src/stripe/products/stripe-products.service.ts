@@ -5,28 +5,30 @@ import Stripe from "stripe";
 @Injectable()
 export default class StripeProductService{
     constructor(@Inject(STRIPE_SERVICE) private readonly StripeService:Stripe){}
-    async createProduct(data:Stripe.ProductCreateParams, StripeAccount: string) {
+    async createProduct(data:Stripe.ProductCreateParams, StripeAccount?: string) {
         try {
             console.log('Creating product with data:', data);
-            console.log('Using Stripe Account:', StripeAccount);
+            
+            
             const product = await this.StripeService.products.create({
                 name: data.name,
                 description: data.description || undefined,
                 images: data.images || [],
                 active: data.active || true,
-            },
-        {
-            stripeAccount: StripeAccount 
-        });
+                metadata: data.metadata || {},
+            });
+            
             console.log('Product created successfully:', product);
             return {message:"Product created successfully", success: true,product:product};
         } catch (error) {
+            console.error('Error creating Stripe product:', error);
             if (error instanceof Stripe.errors.StripeError) {
                 console.error('Stripe error occurred:', error.message);
                 return {message:"An error occured while trying to create your stripe product", success: false, error: error.message};
             }
+            // Handle non-Stripe errors
+            return {message:"An error occured while trying to create your stripe product", success: false, error: error.message || 'Unknown error'};
         }
-
     }
     async getProduct(productId: string) {
         try {
