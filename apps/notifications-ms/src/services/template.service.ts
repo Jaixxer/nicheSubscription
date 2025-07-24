@@ -86,8 +86,12 @@ export class NotificationTemplates {
             `
         };
     }
-
-    static subscriptionBought(name: string, subscriptionName: string): { subject: string; html: string } {
+    static subscriptionBought(
+        name: string,
+        subscriptionName: string,
+        cost: string,
+        frequency: string
+    ): { subject: string; html: string; name: string; cost: string; frequency: string } {
         return {
             subject: `Subscription Confirmation for ${subscriptionName}`,
             html: `
@@ -99,6 +103,7 @@ export class NotificationTemplates {
                             h1 { color: #8e44ad; margin-bottom: 20px; }
                             .subscription-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center; }
                             .subscription-name { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+                            .subscription-details { margin-top: 10px; font-size: 16px; }
                         </style>
                     </head>
                     <body>
@@ -106,6 +111,10 @@ export class NotificationTemplates {
                             <h1>Thank You for Your Subscription, ${name}!</h1>
                             <div class="subscription-card">
                                 <div class="subscription-name">${subscriptionName}</div>
+                                <div class="subscription-details">
+                                    <div>Cost: ${cost}</div>
+                                    <div>Frequency: ${frequency}</div>
+                                </div>
                                 <div>Now Active ✓</div>
                             </div>
                             <p>We are thrilled to have you as a subscriber of ${subscriptionName}.</p>
@@ -114,7 +123,10 @@ export class NotificationTemplates {
                         </div>
                     </body>
                 </html>
-            `
+            `,
+            name,
+            cost,
+            frequency
         };
     }
 

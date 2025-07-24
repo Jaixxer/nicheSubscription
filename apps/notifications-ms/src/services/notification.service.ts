@@ -42,13 +42,18 @@ export class NotificationService {
         await this.smsProvider.sendSms(to, message);
     }
 
-    async sendSubscriptionBoughtEmail(to: string, name: string, subscriptionName: string): Promise<void> {
-        const { subject, html } = NotificationTemplates.subscriptionBought(name, subscriptionName);
+    async sendSubscriptionBoughtEmail(to: string, name: string, subscriptionName: string,cost:string,frequency:string): Promise<void> {
+        const { subject, html } = NotificationTemplates.subscriptionBought(name,subscriptionName,cost,frequency);
         await this.emailProvider.sendEmail(to, subject, html);
     }
-
-    async sendSubscriptionBoughtSms(to: string, name: string, subscriptionName: string): Promise<void> {
-        const message = `Hi ${name}, you have successfully bought the subscription: ${subscriptionName}.`;
+    async sendSubscriptionBoughtSms(
+        to: string,
+        name: string,
+        subscriptionName: string,
+        cost: string,
+        frequency: string
+    ): Promise<void> {
+        const message = `Hi ${name}, you have successfully purchased the "${subscriptionName}" subscription for ${cost} (${frequency}).`;
         await this.smsProvider.sendSms(to, message);
     }
 
