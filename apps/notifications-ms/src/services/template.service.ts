@@ -195,7 +195,7 @@ export class NotificationTemplates {
         };
     }
 
-    static verifyPhone(name: string, code: string): { message: string } {
+    static verifyPhone(name: string, code: number): { message: string } {
         return {
             message: `Hello ${name}, your verification code is ${code}. Please enter this code to verify your phone number.`
         };

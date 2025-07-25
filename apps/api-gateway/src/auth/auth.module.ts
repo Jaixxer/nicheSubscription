@@ -6,11 +6,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { JwtStrategy } from './strategy';
 import { CqrsModule } from '@nestjs/cqrs';
+import { RedisModule } from '../redis/redis.module';
 
 
 @Module({
   imports: [UserModule,JwtModule.register({}),ConfigModule.forRoot({
-    isGlobal: true}),CqrsModule],
+    isGlobal: true}),CqrsModule,RedisModule],
   providers: [AuthService,JwtStrategy],
   controllers: [AuthController]
 })

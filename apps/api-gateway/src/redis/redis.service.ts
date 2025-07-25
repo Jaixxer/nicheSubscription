@@ -94,5 +94,12 @@ export class RedisService {
     async flushall(): Promise<string> {
         return this.redisClient.flushall();
     }
+    async incr(key: string): Promise<number> {
+        return this.redisClient.incr(key);
+    }
+    async decr(key: string): Promise<number> {
+        return this.redisClient.decr(key);
+    }
+    
 }
 

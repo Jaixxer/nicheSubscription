@@ -18,12 +18,7 @@ export class SubscriptionConsumer{
         await this.notificationService.sendWelcomeEmail(email, name);
         await this.notificationService.sendWelcomeSms(phone, name);
     }
-    @EventPattern('verification.email')
-    async handleVerificationEmail(data: { email: string, phone: string, name: string, link: string }) {
-        const { email, phone, name, link } = data;
-        await this.notificationService.sendVerificationEmail(email, name, link);
-        await this.notificationService.sendVerificationSms(phone, name, link);
-    }
+   
     @EventPattern('password.reset.email')
     async handlePasswordResetEmail(data: { email: string, phone: string, name:
     string, link: string, code: string }) {

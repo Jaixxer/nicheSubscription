@@ -1,10 +1,9 @@
 import { BaseCommand } from "../../common/cqrs/base.command";
 
-export class VerifyEmailCommand extends BaseCommand {
+export class AddPhoneNumberCommand extends BaseCommand {
     constructor(
         public readonly userId: string,
-        public readonly email: string,
-        public readonly emailToken: string
+        public readonly phoneNumber: string,
     ) {
         super();
     }

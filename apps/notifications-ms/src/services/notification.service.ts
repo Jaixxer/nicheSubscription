@@ -17,7 +17,7 @@ export class NotificationService {
         await this.emailProvider.sendEmail(to, subject, html);
     }
 
-    async sendVerificationSms(to: string, name: string, code: string): Promise<void> {
+    async sendPhoneVerificationSms(to: string, name: string, code: number): Promise<void> {
         const { message } = NotificationTemplates.verifyPhone(name, code);
         await this.smsProvider.sendSms(to, message);
     }
@@ -74,10 +74,6 @@ export class NotificationService {
 
     async sendPaymentMethodAddedSms(to: string, name: string, paymentMethod: string): Promise<void> {
         const message = `Hi ${name}, your payment method (${paymentMethod}) was added successfully.`;
-        await this.smsProvider.sendSms(to, message);
-    }
-    async sendPhoneVerificationSms(to: string, name: string, code: string): Promise<void> {
-        const message = NotificationTemplates.verifyPhone(name, code).message;
         await this.smsProvider.sendSms(to, message);
     }
 }

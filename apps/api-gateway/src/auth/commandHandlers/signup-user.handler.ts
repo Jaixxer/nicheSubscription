@@ -1,21 +1,21 @@
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
-import { RegisterCommand } from "../commands/register.command";
+import { SignupUserCommand } from "../commands/signup-user.command";
 import { AuthRepository } from "../repositories/auth.repository";
 import { PasswordService } from "../services/password.service";
 import { TokenService } from "../services/token.service";
 import { Injectable } from "@nestjs/common";
 
 @Injectable()
-@CommandHandler(RegisterCommand)
-export class RegisterHandler implements ICommandHandler<RegisterCommand> {
+@CommandHandler(SignupUserCommand)
+export class SignupUserHandler implements ICommandHandler<SignupUserCommand> {
     constructor(
         private readonly authRepository: AuthRepository,
         private readonly passwordService: PasswordService,
         private readonly tokenService: TokenService
     ) {}
 
-    async execute(command: RegisterCommand): Promise<any> {
-        const { email, password, roles, phone, firstName, lastName } = command;
+    async execute(command: SignupUserCommand): Promise<any> {
+        const { email, password, role, phone, firstName, lastName } = command;
 
         // Hash the password
         const hashedPassword = await this.passwordService.hashPassword(password);
@@ -24,7 +24,7 @@ export class RegisterHandler implements ICommandHandler<RegisterCommand> {
         const user = await this.authRepository.createUser(
             email,
             hashedPassword,
-            roles,
+            role,
             phone,
             firstName,
             lastName
