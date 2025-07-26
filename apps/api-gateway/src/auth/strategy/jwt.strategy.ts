@@ -22,7 +22,10 @@ export class JwtStrategy extends PassportStrategy(Strategy,'jwt') {
     },
     select:{
         id:true,
+        firstName:true,
         email:true,
+        phone:true,
+        
         userRoles:{
           select:{
             role:{
@@ -42,7 +45,9 @@ export class JwtStrategy extends PassportStrategy(Strategy,'jwt') {
   console.log(roles)
   return{
       id:user.id,
+      firstName:user.firstName,
       email:user.email,
+      phone:user.phone,
       roles
     }
   }

@@ -1,10 +1,12 @@
 import { ConfigService } from "@nestjs/config";
 import * as nodemailer from "nodemailer";
-import { Logger } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
+
+@Injectable()
 export class EmailProvider{
     private readonly logger = new Logger(EmailProvider.name);
     private transporter: nodemailer.Transporter;
-    constructor(private configService: ConfigService) {
+    constructor(private readonly configService: ConfigService) {
         this.transporter=nodemailer.createTransport({
             service:'gmail',
             auth: {
@@ -22,6 +24,7 @@ export class EmailProvider{
                 html:html
             })
             this.logger.log(`Email sent successfully to ${to}`);
+            return Promise.resolve();
         } catch (error) {
             console.error(`Failed to send email to ${to}:`, error);
             this.logger.error(`Failed to send email to ${to}`, error);

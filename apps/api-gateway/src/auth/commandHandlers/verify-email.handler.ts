@@ -15,7 +15,7 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
     ) {}
 
     async execute(command: VerifyEmailCommand): Promise<any> {
-        const { userId, email, emailToken } = command;
+        const { userId, email, emailToken,firstName } = command;
 
         if (!userId || !email || !emailToken) {
             throw new Error("Invalid Request!");
@@ -23,7 +23,7 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
 
         // Verify the email token
         const verifiedToken = await this.tokenService.verifyToken(emailToken);
-        if (!verifiedToken || verifiedToken.sub !== userId) {
+        if (!verifiedToken ) {
             throw new Error("Invalid or expired email verification token");
         }
 
@@ -31,8 +31,8 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
         await this.authRepository.verifyEmail(userId);
 
         // Notify the user about successful email verification
-        this.notificationService.emit('email.verification.success', { userId, email });
-
+        this.notificationService.emit('email.verification.success', { email, firstName });
+        
         return { success: true, message: "Email verified successfully" };
     }
 }

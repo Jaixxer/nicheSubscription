@@ -11,8 +11,8 @@ export class PasswordService {
         return argon2.hash(password,{salt:salt});
     }
 
-    async verifyPassword(hash: string, password: string): Promise<boolean> {
-        return argon2.verify(hash, password);
+    async verifyPassword(password: string, hashPassword: string): Promise<boolean> {
+        return argon2.verify(hashPassword, password);
     }
     async generateRandomPassword(length: number = 12): Promise<string> {
         const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+[]{}|;:,.<>?';

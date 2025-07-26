@@ -3,7 +3,7 @@ import { FetchPasswordQuery } from '../queries/fetch-password.query';
 import { AuthRepository } from '../repositories/auth.repository';
 
 @QueryHandler(FetchPasswordQuery)
-export class ValidateCredentialsHandler implements IQueryHandler<FetchPasswordQuery> {
+export class FetchPasswordQueryHandler implements IQueryHandler<FetchPasswordQuery> {
     constructor(private readonly authRepository: AuthRepository) {}
 
     async execute(query: FetchPasswordQuery): Promise<any> {

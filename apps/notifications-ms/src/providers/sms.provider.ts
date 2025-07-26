@@ -1,14 +1,14 @@
 
 import { ConfigService } from "@nestjs/config";
-import { Logger } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import * as twilio from "twilio";
-
+@Injectable()
 export class SmsProvider {
     private readonly logger = new Logger(SmsProvider.name);
     private client: twilio.Twilio;
 
-    constructor(private configService: ConfigService) {
-        const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
+    constructor(private readonly configService: ConfigService) {
+        const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SSID');
         const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
         this.client = twilio(accountSid, authToken);
     }

@@ -15,7 +15,17 @@ export class SendEmailVerificationHandler implements ICommandHandler<SendEmailVe
         }
         
         const token = await this.tokenService.generateEmailVerificationToken(userId);
-        const link = `http://localhost:3000/verify-email?token=${token}`;
+        const link = `http://localhost:3000/auth/verify-email?token=${token}`;
         this.notificationService.emit('email.verification.sent', { "to": email, "name": name, "link": link });
+        return {
+            success: true,
+            message: "Email verification link sent successfully",
+            data: {
+                userId,
+                name,
+                email,
+                link
+            }
+        }
     }
 }

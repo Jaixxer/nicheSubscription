@@ -12,12 +12,13 @@ export class LoginHandler implements ICommandHandler<LoginCommand> {
 
     async execute(command: LoginCommand): Promise<any> {
         const { id, password,hashPassword } = command;
+        
         const verification = await this.passService.verifyPassword(password,hashPassword);
         if (!verification) {
             throw new Error('Invalid password');
         }
-        const access_token = this.tokenService.generateAccessToken(id);
-        const refresh_token = this.tokenService.generateRefreshToken(id);
+        const access_token = await this.tokenService.generateAccessToken(id);
+        const refresh_token = await this.tokenService.generateRefreshToken(id);
 
         return {
             success:true,
@@ -25,6 +26,6 @@ export class LoginHandler implements ICommandHandler<LoginCommand> {
             refresh_token,
         }
 
-        return 
+         
     }
 }

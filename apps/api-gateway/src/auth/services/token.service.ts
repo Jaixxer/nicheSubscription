@@ -8,14 +8,14 @@ export class TokenService {
 
     async generateAccessToken(userId: string): Promise<string> {
         const payload = { sub: userId };
-        return this.jwtService.sign(payload, {
-            secret: this.configService.get<string>('JWT_SECRET'),
+         return await this.jwtService.signAsync(payload, {
+            secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
             expiresIn: '1h', // Adjust the expiration time as needed
         });
     }
     async generateRefreshToken(userId: string): Promise<string> {
         const payload = { sub: userId };
-        return this.jwtService.sign(payload, {
+        return await this.jwtService.signAsync(payload, {
             secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
             expiresIn: '14d', // Adjust the expiration time as needed
         });
@@ -23,8 +23,8 @@ export class TokenService {
 
     async verifyToken(token: string): Promise<any> {
         try {
-            return this.jwtService.verify(token, {
-                secret: this.configService.get<string>('JWT_SECRET'),
+            return await this.jwtService.verify(token, {
+                secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
             });
         } catch (error) {
             throw new Error('Invalid token');
@@ -32,8 +32,8 @@ export class TokenService {
     }
     async generateEmailVerificationToken(userId: string): Promise<string> {
         const payload = { sub: userId };
-        return this.jwtService.sign(payload, {
-            secret: this.configService.get<string>('JWT_EMAIL_VERIFICATION_SECRET'),
+        return await this.jwtService.signAsync(payload, {
+            secret: this.configService.get<string>('JWT_ACCESS_SECRET') as string,
             expiresIn: '1d', // Adjust the expiration time as needed
         });
     }

@@ -2,19 +2,19 @@ import { NotificationTemplates } from './template.service';
 import { EmailProvider } from '../providers/email.provider';
 import { SmsProvider } from '../providers/sms.provider';
 import { ConfigService } from '@nestjs/config';
-
+import { Injectable } from '@nestjs/common';
+@Injectable()
 export class NotificationService {
-    private readonly emailProvider: EmailProvider;
-    private readonly smsProvider: SmsProvider;
 
-    constructor(private readonly configService: ConfigService) {
-        this.emailProvider = new EmailProvider(this.configService);
-        this.smsProvider = new SmsProvider(this.configService);
+    constructor(    private readonly emailProvider: EmailProvider,
+    private readonly smsProvider: SmsProvider
+) {
     }
 
     async sendVerificationEmail(to: string, name: string, link: string): Promise<void> {
         const { subject, html } = NotificationTemplates.verifyEmail(name, link);
         await this.emailProvider.sendEmail(to, subject, html);
+        return Promise.resolve();
     }
 
     async sendPhoneVerificationSms(to: string, name: string, code: number): Promise<void> {

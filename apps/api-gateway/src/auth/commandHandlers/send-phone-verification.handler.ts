@@ -21,7 +21,9 @@ export class SendPhoneVerificationHandler implements ICommandHandler<SendPhoneVe
         const otp = Math.floor(Math.random() * (max-min+1)) 
         await this.redisService.set(`phoneNumber-${phoneNumber}-otp`,`${otp}`,600)
         await this.redisService.set(`phoneNumber-${phoneNumber}-otp-count`,'1')
-        this.notificationService.emit('phone.verification.sent',{"to":phoneNumber,"name":name,"otp":otp})
-
+        this.notificationService.emit('phone.verification.sent',{"phoneNumber":phoneNumber,"name":name,"otp":otp})
+        return {
+            message: "Phone verification sent successfully",
+        }
     }
 }
