@@ -2,7 +2,7 @@ import { Body, Controller, Post,Get, Req, UseGuards } from '@nestjs/common';
 import { UserRepository } from './repositories/user.repository';
 import { SignUpDto } from '../../../../libs/common/dtos/dto.auth';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { CreateConnectedAccountCommand, CreateSetupIntentCommand, CreateUserCommand, UpdateUserEmailCommand, UpdateUserPasswordCommand, UpdateUserProfileCommand } from './commands';
+import { CreateConnectedAccountCommand, CreateSetupIntentCommand, UpdateUserEmailCommand, UpdateUserPasswordCommand, UpdateUserProfileCommand } from './commands';
 import { UpdateUserProfileDto } from 'libs/common/dtos/dto.user';
 import { findUserByEmailQuery } from './queries/find-user-by-email.query';
 import { AuthGuard } from '@nestjs/passport';
@@ -15,12 +15,7 @@ import { ConfirmSetupIntentCommand } from './commands/confrim-setup-intent.comma
 @Controller('user')
 export class UserController {
     constructor(private userRepository: UserRepository, private commandBus: CommandBus, private queryBus: QueryBus) { }
-    @Post('create')
-    createUser(@Body() dto: SignUpDto) {
-        return this.commandBus.execute(new CreateUserCommand(
-            dto.email, dto.password, dto.role, dto.phone, dto.firstName, dto.lastName
-        )) 
-    }
+    
     findUser(email: string) {
         return this.queryBus.execute(new findUserByEmailQuery(email));
     }

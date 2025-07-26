@@ -3,7 +3,6 @@ import { UserRepository } from './repositories/user.repository';
 import { UserController } from './user.controller';
 import { PrismaModule } from 'apps/api-gateway/prisma/prisma.module';
 import { RedisModule } from '../redis/redis.module';
-import { CreateUserHandler } from './commandHandlers/create-user.handler';
 import { CqrsModule } from '@nestjs/cqrs';
 import { FindUserByEmailHandler } from './queryHandlers';
 import { UpdateUserHandler } from './commandHandlers/update-user.handler';
@@ -17,7 +16,7 @@ import { ConfirmSetupIntentCommandHandler } from './commandHandlers/confirm-setu
 
 @Module({
   imports:[PrismaModule,RedisModule,CqrsModule],
-  providers: [UserRepository, CreateUserHandler,FindUserByEmailHandler,CreateConnectedAccountHandler,UpdateUserHandler,UpdaterUserEmailHandler,FindUserByIdHandler,UpdateUserPasswordHandler,CheckUserStripeIdHandler,CreateSetupIntentHandler,ConfirmSetupIntentCommandHandler], // ← Add handler
+  providers: [UserRepository,FindUserByEmailHandler,CreateConnectedAccountHandler,UpdateUserHandler,UpdaterUserEmailHandler,FindUserByIdHandler,UpdateUserPasswordHandler,CheckUserStripeIdHandler,CreateSetupIntentHandler,ConfirmSetupIntentCommandHandler], // ← Add handler
   controllers: [UserController],
   exports: [UserRepository]
 })
